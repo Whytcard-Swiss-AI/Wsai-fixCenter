@@ -1,37 +1,68 @@
 import json
-import subprocess
-import sys
+import logging
+import pytest
 
-from fixcenter.engine import DiagnosticEngine
-from fixcenter.models import Problem
-
-
-def test_missing_component_is_ranked_high():
-    report = DiagnosticEngine().diagnose(Problem("Plugin not found at startup", problem_type="plugin"))
-    assert report.findings[0].id == "component-missing"
-    assert report.findings[0].severity == "high"
+from fixcenter.diagnostics.base import DEFAULT_DIAGNOSTICS, Diagnostic
+from fixcenter.engine import DiagnosticEngine, write_report
+from fixcenter.models import Finding, Observation, Problem, Report
 
 
-def test_invalid_config_shape_is_reported():
-    report = DiagnosticEngine().diagnose(Problem("skill fails", problem_type="skill", config={"skills": "oops"}))
-    assert any(item.id == "config-shape" for item in report.findings)
+def test_rank_validation_and_no_findings(caplog):
+    caplog.set_level(logging.INFO)
+    low = Finding("low", "low", "low", 0.9, [], "", [], "test")
+    high = Finding("high", "high", "high", 0.5, [], "", [], "test")
+    engine = DiagnosticEngine(
+        (Diagnostic("mixed", frozenset({"unknown"}), lambda _: [low, high]),)
+    )
+    report = engine.diagnose(Problem("valid"))
+    assert [item.id for item in report.findings] == ["high", "low"]
+    assert report.to_dict()["findings"][0] == high.to_dict()
+    assert "diagnosis_complete" in caplog.text
+    empty = DiagnosticEngine(()).diagnose(Problem("valid"))
+    assert empty.warnings and empty.checks_run == []
 
 
-def test_input_is_validated():
-    try:
-        DiagnosticEngine().diagnose(Problem(""))
-    except ValueError as exc:
-        assert "empty" in str(exc)
-    else:
-        raise AssertionError("empty descriptions must fail")
+def test_diagnostic_failure_is_isolated(caplog):
+    def fail(_):
+        raise RuntimeError("synthetic")
+
+    report = DiagnosticEngine(
+        (Diagnostic("bad", frozenset({"unknown"}), fail),)
+    ).diagnose(Problem("valid"))
+    assert report.findings == []
+    assert "Diagnostic failed" in caplog.text
 
 
-def test_mcp_initialize_and_tool_call():
-    payloads = [
-        {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}},
-        {"jsonrpc": "2.0", "id": 2, "method": "tools/call", "params": {"name": "diagnose", "arguments": {"description": "hook timed out", "problem_type": "hook"}}},
-    ]
-    proc = subprocess.run([sys.executable, "-m", "fixcenter.server"], input="\n".join(json.dumps(item) for item in payloads), text=True, capture_output=True)
-    # server module is intentionally importable; serve is exercised directly below.
-    assert proc.returncode == 0
+@pytest.mark.parametrize(
+    "problem,message",
+    [
+        (Problem(""), "empty"),
+        (Problem("x" * 20_001), "too long"),
+        (Problem("x", logs=["x"] * 201), "at most 200"),
+        (Problem("x", logs=["x" * 20_001]), "log entry"),
+        (Problem("x", observations=[{}] * 101), "at most 100"),
+        (Problem("x", problem_type="other"), "unsupported"),
+        (Problem(3), "description must be a string"),
+        (Problem("x", logs=[3]), "logs must be a list"),
+        (Problem("x", observations=[3]), "observations must be a list"),
+    ],
+)
+def test_validation(problem, message):
+    with pytest.raises(ValueError, match=message):
+        DiagnosticEngine().diagnose(problem)
 
+
+def test_write_report_and_model_serialization(tmp_path):
+    observation = Observation("os.identity", "ok", "done", "safe", 4)
+    assert observation.to_dict()["duration_ms"] == 4
+    report = Report("fixed", Problem("valid").to_dict(), [], [])
+    path = write_report(report, tmp_path / "nested")
+    assert path.name.endswith("-fixed.json")
+    assert json.loads(path.read_text(encoding="utf-8"))["report_id"] == "fixed"
+    sanitized = Problem("token=secret", logs=["user@example.com"]).to_dict()
+    assert "secret" not in sanitized["description"]
+    assert sanitized["logs"] == ["<EMAIL>"]
+
+
+def test_each_diagnostic_has_unique_name():
+    assert len({item.name for item in DEFAULT_DIAGNOSTICS}) == len(DEFAULT_DIAGNOSTICS)

@@ -4,13 +4,21 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "wsai-fixcenter"
-version = "0.1.0"
-description = "Evidence-first MCP diagnostics for hooks, plugins, skills, and configuration."
+version = "0.2.0"
+description = "Privacy-first MCP diagnostics and read-only PC control coverage for hooks, plugins, skills, configuration, runtimes, networking, and system state."
 readme = "README.md"
 requires-python = ">=3.10"
-license = { text = "MIT" }
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [{ name = "WSAI" }]
 dependencies = []
+
+[project.urls]
+Repository = "https://github.com/Whytcard-Swiss-AI/Wsai-fixCenter"
+Issues = "https://github.com/Whytcard-Swiss-AI/Wsai-fixCenter/issues"
+
+[project.optional-dependencies]
+dev = ["build>=1", "pytest>=8", "pytest-cov>=5", "ruff>=0.15", "twine>=6"]
 
 [project.scripts]
 fixcenter = "fixcenter.cli:main"
@@ -20,4 +28,14 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+addopts = "--cov=fixcenter --cov-report=term-missing --cov-fail-under=100"
 
+[tool.coverage.run]
+source = ["fixcenter"]
+
+[tool.coverage.report]
+fail_under = 100
+show_missing = true
+
+[tool.ruff]
+target-version = "py310"

@@ -5,3 +5,8 @@ dist/
 build/
 *.egg-info/
 .fixcenter/
+.coverage
+coverage.xml
+htmlcov/
+reports/
+*.report.json
