@@ -1,0 +1,10 @@
+{
+  "description": "Describe the observable failure and when it started.",
+  "problem_type": "unknown",
+  "logs": [],
+  "config": {},
+  "components": [],
+  "environment": {},
+  "workspace": null
+}
+
