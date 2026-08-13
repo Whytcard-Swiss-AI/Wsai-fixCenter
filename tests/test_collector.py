@@ -15,14 +15,15 @@ def completed(argv, **_):
 
 def test_plan_and_successful_collection_are_separate():
     collector = SafeCollector(completed)
-    full_plan = collector.collect(platform_name="windows")
+    host_platform = current_platform()
+    full_plan = collector.collect(platform_name=host_platform)
     assert full_plan.controls_requested == len(CONTROL_CATALOG)
-    plan = collector.collect(["os.identity"], platform_name="windows")
+    plan = collector.collect(["os.identity"], platform_name=host_platform)
     assert plan.executed is False and plan.runtime_coverage_percent == 0.0
     assert plan.observations[0].status == "planned"
     run = collector.collect(
         ["os.identity"],
-        platform_name="windows",
+        platform_name=host_platform,
         execute=True,
         consent=True,
         include_output=True,
