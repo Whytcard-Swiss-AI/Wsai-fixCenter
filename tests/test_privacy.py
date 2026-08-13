@@ -1,4 +1,4 @@
-from fixcenter.privacy import redact, redact_value
+from fixcenter.privacy import contains_secret, redact, redact_value
 
 
 def test_redaction_masks_sensitive_values(monkeypatch):
@@ -48,3 +48,17 @@ def test_recursive_redaction_preserves_non_strings():
     assert result["token"] == "token=<REDACTED>"
     assert result["items"] == ["<EMAIL>", 3]
     assert result["tuple"] == ("<IP>", True)
+
+
+def test_common_unlabelled_secret_formats_are_detected_and_redacted():
+    samples = [
+        "xo" + "xb-1234567890-abcdefghijklmnop",
+        "gl" + "pat-abcdefghijklmnopqrst",
+        "AI" + "zaSyA123456789012345678901234567890",
+        "ey" + "JhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.abcdefghijklmnop",
+        "-----BEGIN "
+        + "PRIVATE KEY-----\nsynthetic-private-material\n-----END PRIVATE KEY-----",
+    ]
+    for secret in samples:
+        assert contains_secret(secret)
+        assert secret not in redact(f"prefix {secret} suffix")

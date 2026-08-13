@@ -11,6 +11,7 @@ from fixcenter.engine import DiagnosticEngine, write_report
 from fixcenter.evaluation import run_evaluation
 from fixcenter.models import Problem
 from fixcenter.server import serve
+from fixcenter.setup_manager import SetupManager
 
 
 def _json(data) -> None:
@@ -42,6 +43,29 @@ def main() -> None:
     collect.add_argument("--include-output", action="store_true")
     sub.add_parser("self-test", help="Run synthetic diagnostics without machine data")
     sub.add_parser("catalog", help="List catalogued controls without inspecting the PC")
+    sub.add_parser(
+        "setup-catalog", help="Show setup adapters and precedence without inspection"
+    )
+    setup_inventory = sub.add_parser(
+        "setup-inventory", help="Inventory setup metadata with explicit consent"
+    )
+    setup_inventory.add_argument("root", help="Absolute workspace directory")
+    setup_inventory.add_argument("--consent", action="store_true")
+    setup_inventory.add_argument("--include-home", action="store_true")
+    setup_inventory.add_argument("--include-unknown-names", action="store_true")
+    setup_plan = sub.add_parser(
+        "setup-plan", help="Plan canonical setup without writing"
+    )
+    setup_plan.add_argument("root", help="Absolute workspace directory")
+    setup_plan.add_argument("manifest", help="Secret-free setup manifest JSON")
+    setup_plan.add_argument("--consent", action="store_true")
+    setup_apply = sub.add_parser(
+        "setup-apply", help="Apply an exact reviewed setup plan"
+    )
+    setup_apply.add_argument("root", help="Absolute workspace directory")
+    setup_apply.add_argument("manifest", help="Secret-free setup manifest JSON")
+    setup_apply.add_argument("plan_id", help="Plan identifier returned by setup-plan")
+    setup_apply.add_argument("--consent", action="store_true")
     args = parser.parse_args()
     if args.command == "serve":
         serve()
@@ -70,10 +94,35 @@ def main() -> None:
         )
     elif args.command == "self-test":
         _json(run_evaluation())
-    else:
+    elif args.command == "catalog":
         _json(
             {
                 "total": len(CONTROL_CATALOG),
                 "controls": [item.to_dict() for item in CONTROL_CATALOG],
             }
         )
+    elif args.command == "setup-catalog":
+        _json(SetupManager.catalog())
+    elif args.command == "setup-inventory":
+        _json(
+            SetupManager().inventory(
+                args.root,
+                consent=args.consent,
+                include_home=args.include_home,
+                include_unknown_names=args.include_unknown_names,
+            )
+        )
+    else:
+        manifest = json.loads(Path(args.manifest).read_text(encoding="utf-8"))
+        manager = SetupManager()
+        if args.command == "setup-plan":
+            _json(manager.plan(args.root, manifest, consent=args.consent).to_dict())
+        else:
+            _json(
+                manager.apply(
+                    args.root,
+                    manifest,
+                    args.plan_id,
+                    consent=args.consent,
+                )
+            )

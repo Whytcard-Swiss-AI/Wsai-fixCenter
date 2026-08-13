@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.3.0 - 2026-08-13
+
+- Add canonical multi-agent setup governance under `.fixcenter`.
+- Add metadata-only inventory for known and unknown dot-directories, instruction layers and account-related environment-variable names.
+- Add five generated adapters for AGENTS, Cursor, Claude, Gemini and GitHub Copilot.
+- Add secret-free, isolated account profiles with PowerShell and POSIX-shell activators.
+- Add conflict-aware, workspace-bound planning; strict generated-file ownership headers; recoverable retirement; transactional writes and backups.
+- Reject case-insensitive or Windows-reserved profile names and any profile binding whose source is also a managed target.
+- Block setup symlinks during metadata inventory and include all public skills in both source archives and wheels.
+- Recheck every target under an OS-managed workspace lock, move managed originals atomically to recoverable storage and use no-overwrite creation for replacements.
+- Expand common secret-pattern handling and make privacy documentation explicit about pattern-based redaction limits.
+- Expand the MCP surface from 6 to 10 tools and add setup CLI commands.
+- Add the `fixcenter-setup` skill, public example manifest and novice-facing governance guide.
+
 ## 0.2.0 - 2026-08-13
 
 - Add a 38-control, 12-domain catalog for Windows, Linux and macOS, including Codex runtime, remote-control, chat-stream and hook-source surfaces.

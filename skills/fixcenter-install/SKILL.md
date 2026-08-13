@@ -24,7 +24,7 @@ Use this skill when a user asks to install, update, connect, or validate WSAI Fi
 5. Run `python -m fixcenter self-test`; require `success_rate_percent: 100.0`.
 6. Run `python -m fixcenter coverage --platform <windows|linux|darwin>`; explain that design coverage is not runtime observation.
 7. Add the MCP entry only after locating the client's real configuration format. Use the virtual environment's absolute Python executable and `-m fixcenter serve`.
-8. Restart the client and verify `tools/list` exposes six tools.
+8. Restart the client and verify `tools/list` exposes ten tools.
 
 ## MCP entry template
 
@@ -51,4 +51,4 @@ Report these independently:
 - catalog design coverage for the target platform;
 - client restarted;
 - MCP server connected;
-- six tools visible.
+- ten tools visible.

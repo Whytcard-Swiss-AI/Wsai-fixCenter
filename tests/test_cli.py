@@ -54,6 +54,62 @@ def test_cli_serve_dispatch(monkeypatch):
     assert called == [True]
 
 
+def test_setup_cli_workflow(monkeypatch, capsys, tmp_path):
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    source = tmp_path / "setup.json"
+    source.write_text(
+        json.dumps(
+            {
+                "version": 1,
+                "active_profile": "personal",
+                "profiles": {"personal": {"variables": {}}},
+                "instructions": ["Write tests."],
+                "tools": ["agents"],
+            }
+        ),
+        encoding="utf-8",
+    )
+    assert (
+        json.loads(invoke(monkeypatch, capsys, "setup-catalog"))["manifest_version"]
+        == 1
+    )
+    inventory = json.loads(
+        invoke(
+            monkeypatch,
+            capsys,
+            "setup-inventory",
+            str(workspace),
+            "--consent",
+            "--include-home",
+            "--include-unknown-names",
+        )
+    )
+    assert inventory["workspace"]["unknown_dot_directory_count"] == 0
+    plan = json.loads(
+        invoke(
+            monkeypatch,
+            capsys,
+            "setup-plan",
+            str(workspace),
+            str(source),
+            "--consent",
+        )
+    )
+    applied = json.loads(
+        invoke(
+            monkeypatch,
+            capsys,
+            "setup-apply",
+            str(workspace),
+            str(source),
+            plan["plan_id"],
+            "--consent",
+        )
+    )
+    assert applied["applied"] is True
+
+
 def test_package_main_module(monkeypatch):
     called = []
     monkeypatch.setattr(cli, "main", lambda: called.append(True))

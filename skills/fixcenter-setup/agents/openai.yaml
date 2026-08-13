@@ -1,0 +1,4 @@
+interface:
+  display_name: "FixCenter Setup"
+  short_description: "Consolidate agent setup safely"
+  default_prompt: "Use $fixcenter-setup to inventory and consolidate this project setup without exposing credentials."

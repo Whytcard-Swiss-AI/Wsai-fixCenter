@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "wsai-fixcenter"
-version = "0.2.0"
-description = "Privacy-first MCP diagnostics and read-only PC control coverage for hooks, plugins, skills, configuration, runtimes, networking, and system state."
+version = "0.3.0"
+description = "Privacy-first MCP diagnostics and setup governance for agent tools, hooks, plugins, skills, accounts, instructions, configuration, and system state."
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
@@ -25,6 +25,14 @@ fixcenter = "fixcenter.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.data-files]
+"share/wsai-fixcenter/skills/fixcenter-install" = ["skills/fixcenter-install/SKILL.md"]
+"share/wsai-fixcenter/skills/fixcenter-install/agents" = ["skills/fixcenter-install/agents/openai.yaml"]
+"share/wsai-fixcenter/skills/fixcenter-use" = ["skills/fixcenter-use/SKILL.md"]
+"share/wsai-fixcenter/skills/fixcenter-use/agents" = ["skills/fixcenter-use/agents/openai.yaml"]
+"share/wsai-fixcenter/skills/fixcenter-setup" = ["skills/fixcenter-setup/SKILL.md"]
+"share/wsai-fixcenter/skills/fixcenter-setup/agents" = ["skills/fixcenter-setup/agents/openai.yaml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

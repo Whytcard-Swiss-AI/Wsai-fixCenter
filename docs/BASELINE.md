@@ -12,6 +12,6 @@ The optimization cycle follows the requested agent-improvement workflow: establi
 | Supported platforms | implicit | Windows, Linux, macOS |
 | Catalog design coverage | 0% | 100% on each supported platform |
 | Collection consent gate | absent | required |
-| Output redaction | absent | strict and tested |
+| Output redaction | absent | tested for common sensitive formats |
 
 The runtime observation score is intentionally not filled with synthetic data. It only exists after an end user explicitly runs selected probes on their own machine; those results must never be committed to this public repository.

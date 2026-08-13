@@ -10,11 +10,13 @@ from fixcenter.server import (
     PROTOCOL,
     SUPPORTED_PROTOCOLS,
     TOOLS,
+    _validate_schema,
     call_tool,
     handle,
     response,
     serve,
 )
+from fixcenter.setup_manager import SetupManager
 
 
 def request(method, request_id=1, params=None):
@@ -37,15 +39,29 @@ def test_initialize_ping_notifications_and_tool_list():
     )
     assert initialized["result"]["protocolVersion"] == PROTOCOL
     fallback = handle(request("initialize", params="bad"), engine)
-    assert fallback["result"]["serverInfo"]["version"] == "0.2.0"
+    assert fallback["result"]["serverInfo"]["version"] == "0.3.0"
     assert handle(request("ping"), engine)["result"] == {}
     tool_list = handle(request("tools/list"), engine)["result"]
-    assert len(tool_list["tools"]) == len(TOOLS) == 6
+    assert len(tool_list["tools"]) == len(TOOLS) == 10
     assert tool_list["ttlMs"] == 300_000 and tool_list["cacheScope"] == "public"
-    assert all(
-        item["annotations"]["readOnlyHint"]
-        and item["outputSchema"] == {"type": "object"}
-        for item in TOOLS
+    assert all(item["outputSchema"] == {"type": "object"} for item in TOOLS)
+    assert (
+        next(item for item in TOOLS if item["name"] == "apply_setup")["annotations"][
+            "readOnlyHint"
+        ]
+        is False
+    )
+    assert (
+        next(item for item in TOOLS if item["name"] == "apply_setup")["annotations"][
+            "idempotentHint"
+        ]
+        is False
+    )
+    assert (
+        next(item for item in TOOLS if item["name"] == "apply_setup")["annotations"][
+            "destructiveHint"
+        ]
+        is True
     )
     discover = handle(
         request(
@@ -134,6 +150,62 @@ def test_tool_errors_and_unknown_methods():
         TOOLS.pop()
 
 
+def test_setup_tools_through_mcp(tmp_path):
+    workspace, home = tmp_path / "workspace", tmp_path / "home"
+    workspace.mkdir()
+    home.mkdir()
+    setup = SetupManager(home=home, environ={})
+    engine = DiagnosticEngine()
+    manifest = {
+        "version": 1,
+        "active_profile": "personal",
+        "profiles": {"personal": {"variables": {}}},
+        "instructions": ["Write tests."],
+        "tools": ["agents"],
+    }
+
+    def setup_call(name, arguments):
+        result = handle(
+            request("tools/call", params={"name": name, "arguments": arguments}),
+            engine,
+            setup_manager=setup,
+        )
+        return result["result"]["structuredContent"]
+
+    assert setup_call("get_setup_catalog", {})["manifest_version"] == 1
+    inventory = setup_call("inspect_setup", {"root": str(workspace), "consent": True})
+    assert inventory["workspace"]["known_tool_directories"] == {}
+    plan = setup_call(
+        "plan_setup",
+        {"root": str(workspace), "manifest": manifest, "consent": True},
+    )
+    applied = setup_call(
+        "apply_setup",
+        {
+            "root": str(workspace),
+            "manifest": manifest,
+            "plan_id": plan["plan_id"],
+            "consent": True,
+        },
+    )
+    assert applied["applied"] is True
+
+
+def test_setup_filesystem_errors_are_sanitized(tmp_path):
+    class BrokenSetup:
+        def catalog(self):
+            raise PermissionError(f"private path {tmp_path}")
+
+    result = handle(
+        request("tools/call", params={"name": "get_setup_catalog", "arguments": {}}),
+        DiagnosticEngine(),
+        setup_manager=BrokenSetup(),
+    )["result"]
+    assert result["isError"] is True
+    assert "PermissionError" in result["structuredContent"]["error"]
+    assert str(tmp_path) not in result["structuredContent"]["error"]
+
+
 @pytest.mark.parametrize(
     "name,arguments,message",
     [
@@ -157,6 +229,11 @@ def test_schema_validation_rejects_untrusted_arguments(name, arguments, message)
     assert message in result["result"]["structuredContent"]["error"]
 
 
+def test_schema_validator_allows_unconstrained_collections():
+    _validate_schema(["anything"], {"type": "array"})
+    _validate_schema({"anything": "goes"}, {"type": "object"})
+
+
 def test_serve_processes_valid_and_invalid_lines(monkeypatch):
     input_lines = "not-json\n[]\n" + json.dumps(request("ping")) + "\n"
     output = io.StringIO()
@@ -167,6 +244,15 @@ def test_serve_processes_valid_and_invalid_lines(monkeypatch):
     assert lines[0]["error"]["code"] == -32700
     assert lines[1]["error"]["code"] == -32600
     assert lines[2]["result"] == {}
+
+
+def test_serve_suppresses_notification_responses(monkeypatch):
+    output = io.StringIO()
+    notification = request("notifications/initialized", request_id=None)
+    monkeypatch.setattr("sys.stdin", io.StringIO(json.dumps(notification) + "\n"))
+    monkeypatch.setattr("sys.stdout", output)
+    serve()
+    assert output.getvalue() == ""
 
 
 def test_serve_contains_unexpected_failures(monkeypatch):

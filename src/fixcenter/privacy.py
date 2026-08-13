@@ -13,7 +13,11 @@ _QUOTED_SECRET = re.compile(
 _BEARER = re.compile(r"(?i)\b(bearer\s+)[A-Za-z0-9._~+/=-]+")
 _URL_CREDENTIAL = re.compile(r"(?i)(https?://)[^/\s:@]+:[^@\s/]+@")
 _KNOWN_TOKEN = re.compile(
-    r"\b(?:gh[pousr]_[A-Za-z0-9_]{20,}|sk-[A-Za-z0-9_-]{20,}|AKIA[A-Z0-9]{16})\b"
+    r"\b(?:gh[pousr]_[A-Za-z0-9_]{20,}|github_pat_[A-Za-z0-9_]{20,}|glpat-[A-Za-z0-9_-]{20,}|xox[baprs]-[A-Za-z0-9-]{10,}|sk-[A-Za-z0-9_-]{20,}|AKIA[A-Z0-9]{16}|AIza[A-Za-z0-9_-]{30,})\b"
+)
+_JWT = re.compile(r"\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b")
+_PEM = re.compile(
+    r"-----BEGIN (?:RSA |EC |OPENSSH |DSA )?PRIVATE KEY-----[\s\S]*?-----END (?:RSA |EC |OPENSSH |DSA )?PRIVATE KEY-----"
 )
 _EMAIL = re.compile(r"(?<![\w.-])[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}(?![\w.-])")
 _WINDOWS_HOME = re.compile(r"(?i)\b[A-Z]:\\Users\\[^\\\s\"']+")
@@ -22,9 +26,25 @@ _IPV4 = re.compile(r"(?<![\d.])(?:\d{1,3}\.){3}\d{1,3}(?![\d.])")
 _MAC = re.compile(r"(?i)(?<![0-9a-f])(?:[0-9a-f]{2}[:-]){5}[0-9a-f]{2}(?![0-9a-f])")
 
 
+def contains_secret(text: str) -> bool:
+    """Detect credential-shaped values before writing a setup manifest."""
+    return any(
+        pattern.search(text)
+        for pattern in (
+            _SECRET,
+            _QUOTED_SECRET,
+            _BEARER,
+            _URL_CREDENTIAL,
+            _KNOWN_TOKEN,
+            _JWT,
+            _PEM,
+        )
+    )
+
+
 def redact(text: str, *, max_chars: int = 8_000) -> str:
     """Remove common secrets and personal identifiers from diagnostic output."""
-    value = text[:max_chars]
+    value = _PEM.sub("<REDACTED>", text)[:max_chars]
     value = _SECRET.sub(
         lambda match: f"{match.group(1)}{match.group(2)}<REDACTED>", value
     )
@@ -32,6 +52,7 @@ def redact(text: str, *, max_chars: int = 8_000) -> str:
     value = _BEARER.sub(r"\1<REDACTED>", value)
     value = _URL_CREDENTIAL.sub(r"\1<REDACTED>@", value)
     value = _KNOWN_TOKEN.sub("<REDACTED>", value)
+    value = _JWT.sub("<REDACTED>", value)
     value = _EMAIL.sub("<EMAIL>", value)
     value = _WINDOWS_HOME.sub("<HOME>", value)
     value = _UNIX_HOME.sub("<HOME>", value)

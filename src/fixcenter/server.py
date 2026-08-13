@@ -5,6 +5,7 @@ import logging
 import sys
 from typing import Any
 
+from fixcenter import __version__
 from fixcenter.catalog import CONTROL_CATALOG
 from fixcenter.collector import SafeCollector
 from fixcenter.diagnostics.base import DEFAULT_DIAGNOSTICS
@@ -12,6 +13,7 @@ from fixcenter.engine import DiagnosticEngine
 from fixcenter.evaluation import run_evaluation
 from fixcenter.models import Problem
 from fixcenter.privacy import redact
+from fixcenter.setup_manager import ADAPTERS, SetupManager
 
 LOGGER = logging.getLogger("fixcenter.server")
 
@@ -33,6 +35,37 @@ PROBLEM_TYPES = [
     "unknown",
 ]
 PLATFORMS = ["windows", "linux", "darwin"]
+_PROFILE_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "properties": {
+        "account_label": {"type": "string", "minLength": 1, "maxLength": 64},
+        "variables": {
+            "type": "object",
+            "additionalProperties": {"type": "string", "maxLength": 132},
+        },
+    },
+}
+_MANIFEST_SCHEMA = {
+    "type": "object",
+    "required": ["version", "active_profile", "profiles", "instructions", "tools"],
+    "additionalProperties": False,
+    "properties": {
+        "version": {"type": "integer", "enum": [1]},
+        "active_profile": {"type": "string", "minLength": 1, "maxLength": 64},
+        "profiles": {"type": "object", "additionalProperties": _PROFILE_SCHEMA},
+        "instructions": {
+            "type": "array",
+            "maxItems": 200,
+            "items": {"type": "string", "minLength": 1, "maxLength": 5000},
+        },
+        "tools": {
+            "type": "array",
+            "maxItems": len(ADAPTERS),
+            "items": {"type": "string", "enum": [item.id for item in ADAPTERS]},
+        },
+    },
+}
 TOOLS = [
     {
         "name": "diagnose",
@@ -118,6 +151,59 @@ TOOLS = [
             "properties": {},
         },
     },
+    {
+        "name": "get_setup_catalog",
+        "description": "Explain the canonical setup model, supported agent adapters, account profiles and precedence without inspecting a machine.",
+        "inputSchema": {
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {},
+        },
+    },
+    {
+        "name": "inspect_setup",
+        "description": "Inventory known dot-directories, instruction layers and account-related variable names. Reads metadata only and requires consent.",
+        "inputSchema": {
+            "type": "object",
+            "required": ["root", "consent"],
+            "additionalProperties": False,
+            "properties": {
+                "root": {"type": "string", "minLength": 1, "maxLength": 4096},
+                "consent": {"type": "boolean"},
+                "include_home": {"type": "boolean", "default": False},
+                "include_unknown_names": {"type": "boolean", "default": False},
+            },
+        },
+    },
+    {
+        "name": "plan_setup",
+        "description": "Create a conflict-aware, secret-free plan for canonical instructions and account profiles. Never writes files.",
+        "inputSchema": {
+            "type": "object",
+            "required": ["root", "manifest", "consent"],
+            "additionalProperties": False,
+            "properties": {
+                "root": {"type": "string", "minLength": 1, "maxLength": 4096},
+                "manifest": _MANIFEST_SCHEMA,
+                "consent": {"type": "boolean"},
+            },
+        },
+    },
+    {
+        "name": "apply_setup",
+        "description": "Apply an unchanged setup plan transactionally. Requires the exact plan ID and explicit consent; preserves user-owned files and backs up managed updates.",
+        "inputSchema": {
+            "type": "object",
+            "required": ["root", "manifest", "plan_id", "consent"],
+            "additionalProperties": False,
+            "properties": {
+                "root": {"type": "string", "minLength": 1, "maxLength": 4096},
+                "manifest": _MANIFEST_SCHEMA,
+                "plan_id": {"type": "string", "minLength": 24, "maxLength": 24},
+                "consent": {"type": "boolean"},
+            },
+        },
+    },
 ]
 
 _TOOL_TITLES = {
@@ -127,14 +213,18 @@ _TOOL_TITLES = {
     "audit_coverage": "Audit design coverage",
     "collect_context": "Plan or collect local context",
     "run_self_test": "Run synthetic self-test",
+    "get_setup_catalog": "Understand setup governance",
+    "inspect_setup": "Inventory agent setup",
+    "plan_setup": "Plan setup consolidation",
+    "apply_setup": "Apply approved setup plan",
 }
 for _tool in TOOLS:
     _tool["title"] = _TOOL_TITLES[_tool["name"]]
     _tool["outputSchema"] = {"type": "object"}
     _tool["annotations"] = {
-        "readOnlyHint": True,
-        "destructiveHint": False,
-        "idempotentHint": True,
+        "readOnlyHint": _tool["name"] != "apply_setup",
+        "destructiveHint": _tool["name"] == "apply_setup",
+        "idempotentHint": _tool["name"] != "apply_setup",
         "openWorldHint": False,
     }
 
@@ -170,6 +260,7 @@ def _matches_type(value: Any, expected: str) -> bool:
         "string": lambda item: isinstance(item, str),
         "boolean": lambda item: type(item) is bool,
         "null": lambda item: item is None,
+        "integer": lambda item: isinstance(item, int) and not isinstance(item, bool),
     }
     return expected in checks and checks[expected](value)
 
@@ -186,7 +277,8 @@ def _validate_schema(
     ):
         raise ValueError(f"{path} has an invalid type")
     if "enum" in schema and value not in schema["enum"]:
-        raise ValueError(f"{path} must be one of: {', '.join(schema['enum'])}")
+        choices = ", ".join(str(item) for item in schema["enum"])
+        raise ValueError(f"{path} must be one of: {choices}")
     if isinstance(value, str):
         if len(value) < schema.get("minLength", 0):
             raise ValueError(f"{path} is too short")
@@ -231,8 +323,10 @@ def call_tool(
     arguments: dict[str, Any],
     engine: DiagnosticEngine,
     collector: SafeCollector,
+    setup_manager: SetupManager | None = None,
 ) -> Any:
     _validate_tool_arguments(name, arguments)
+    setup = setup_manager or SetupManager()
     if name == "diagnose":
         return engine.diagnose(Problem(**arguments)).to_dict()
     if name == "list_diagnostics":
@@ -267,6 +361,26 @@ def call_tool(
         ).to_dict()
     if name == "run_self_test":
         return run_evaluation(engine)
+    if name == "get_setup_catalog":
+        return setup.catalog()
+    if name == "inspect_setup":
+        return setup.inventory(
+            arguments["root"],
+            consent=arguments["consent"],
+            include_home=bool(arguments.get("include_home", False)),
+            include_unknown_names=bool(arguments.get("include_unknown_names", False)),
+        )
+    if name == "plan_setup":
+        return setup.plan(
+            arguments["root"], arguments["manifest"], consent=arguments["consent"]
+        ).to_dict()
+    if name == "apply_setup":
+        return setup.apply(
+            arguments["root"],
+            arguments["manifest"],
+            arguments["plan_id"],
+            consent=arguments["consent"],
+        )
     raise KeyError(name)
 
 
@@ -274,6 +388,7 @@ def handle(
     request: Any,
     engine: DiagnosticEngine,
     collector: SafeCollector | None = None,
+    setup_manager: SetupManager | None = None,
 ) -> dict[str, Any] | None:
     if not isinstance(request, dict):
         return response(None, error={"code": -32600, "message": "Invalid Request"})
@@ -297,7 +412,7 @@ def handle(
             {
                 "protocolVersion": protocol,
                 "capabilities": {"tools": {"listChanged": False}},
-                "serverInfo": {"name": "wsai-fixcenter", "version": "0.2.0"},
+                "serverInfo": {"name": "wsai-fixcenter", "version": __version__},
             },
         )
     if method == "server/discover":
@@ -307,14 +422,14 @@ def handle(
                 "resultType": "complete",
                 "supportedVersions": list(SUPPORTED_PROTOCOLS),
                 "capabilities": {"tools": {}},
-                "serverInfo": {"name": "wsai-fixcenter", "version": "0.2.0"},
-                "instructions": "Diagnose supplied evidence first; plan collection before requesting explicit consent to execute read-only probes.",
+                "serverInfo": {"name": "wsai-fixcenter", "version": __version__},
+                "instructions": "Diagnose supplied evidence first. For setup consolidation, inventory metadata, review a plan, then apply only the exact approved plan ID.",
                 "ttlMs": 300_000,
                 "cacheScope": "public",
                 "_meta": {
                     "io.modelcontextprotocol/serverInfo": {
                         "name": "wsai-fixcenter",
-                        "version": "0.2.0",
+                        "version": __version__,
                     }
                 },
             },
@@ -336,7 +451,11 @@ def handle(
         name = params.get("name")
         try:
             data = call_tool(
-                str(name), params.get("arguments", {}), engine, active_collector
+                str(name),
+                params.get("arguments", {}),
+                engine,
+                active_collector,
+                setup_manager,
             )
         except KeyError:
             return response(
@@ -344,6 +463,13 @@ def handle(
             )
         except (TypeError, ValueError) as exc:
             return response(request_id, _tool_error(str(exc)))
+        except OSError as exc:
+            return response(
+                request_id,
+                _tool_error(
+                    f"setup filesystem operation failed safely: {type(exc).__name__}"
+                ),
+            )
         return response(request_id, _tool_result(data))
     return (
         response(
@@ -360,11 +486,15 @@ def serve() -> None:
         level=logging.INFO,
         format="%(asctime)s %(levelname)s %(message)s",
     )
-    engine, collector = DiagnosticEngine(), SafeCollector()
+    engine, collector, setup_manager = (
+        DiagnosticEngine(),
+        SafeCollector(),
+        SetupManager(),
+    )
     for line in sys.stdin:
         try:
             request = json.loads(line)
-            result = handle(request, engine, collector)
+            result = handle(request, engine, collector, setup_manager)
             if result is not None:
                 sys.stdout.write(json.dumps(result, ensure_ascii=False) + "\n")
                 sys.stdout.flush()

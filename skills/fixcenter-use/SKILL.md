@@ -15,6 +15,7 @@ Use this skill when a user reports a technical failure that may involve hooks, p
 - Execute probes only with explicit approval represented by both `execute=true` and `consent=true`.
 - Keep `include_output=false` unless redacted output is necessary for the diagnosis.
 - Never apply a proposed fix automatically. Ask before any mutation, installation, restart, permission change, deletion, or configuration edit.
+- For multi-tool setup conflicts, hand off to the `fixcenter-setup` workflow; do not treat setup application as diagnostic collection.
 - Treat a runtime coverage below 100% as incomplete observation, not as a healthy machine.
 
 ## Diagnostic workflow

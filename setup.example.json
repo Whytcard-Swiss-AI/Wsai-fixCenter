@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "active_profile": "personal",
+  "profiles": {
+    "personal": {
+      "account_label": "personal",
+      "variables": {
+        "OPENAI_API_KEY": "env:OPENAI_PERSONAL_API_KEY"
+      }
+    },
+    "work": {
+      "account_label": "work",
+      "variables": {
+        "OPENAI_API_KEY": "env:OPENAI_WORK_API_KEY"
+      }
+    }
+  },
+  "instructions": [
+    "Explain the intended change before modifying files.",
+    "Run the smallest relevant test after every change.",
+    "Never commit credentials or machine-specific paths."
+  ],
+  "tools": ["agents", "cursor", "claude", "gemini", "copilot"]
+}
