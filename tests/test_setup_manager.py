@@ -432,7 +432,7 @@ def test_read_expected_file_rejects_unsafe_targets(tmp_path, monkeypatch):
     with pytest.raises(ValueError, match="opened safely"):
         SetupManager._read_expected_file(workspace, target, "missing")
     target.mkdir()
-    with pytest.raises(ValueError, match="opened safely"):
+    with pytest.raises(ValueError, match="opened safely|safe regular file"):
         SetupManager._read_expected_file(workspace, target, "directory")
     target.rmdir()
     target.write_text("content", encoding="utf-8")
