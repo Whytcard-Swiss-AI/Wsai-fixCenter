@@ -3,8 +3,9 @@ from __future__ import annotations
 import platform
 import subprocess
 import time
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
-from typing import Any, Callable, Sequence
+from typing import Any
 
 from fixcenter.catalog import CONTROL_BY_ID, CONTROL_CATALOG, ProbeSpec, coverage_report
 from fixcenter.models import Observation

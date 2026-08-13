@@ -2,7 +2,7 @@ import json
 import runpy
 import sys
 
-import fixcenter.cli as cli
+from fixcenter import cli
 
 
 def invoke(monkeypatch, capsys, *arguments):

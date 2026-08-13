@@ -1,5 +1,6 @@
 import json
 import logging
+
 import pytest
 
 from fixcenter.diagnostics.base import DEFAULT_DIAGNOSTICS, Diagnostic
@@ -34,21 +35,22 @@ def test_diagnostic_failure_is_isolated(caplog):
 
 
 @pytest.mark.parametrize(
-    "problem,message",
+    "problem,error_type,message",
     [
-        (Problem(""), "empty"),
-        (Problem("x" * 20_001), "too long"),
-        (Problem("x", logs=["x"] * 201), "at most 200"),
-        (Problem("x", logs=["x" * 20_001]), "log entry"),
-        (Problem("x", observations=[{}] * 101), "at most 100"),
-        (Problem("x", problem_type="other"), "unsupported"),
-        (Problem(3), "description must be a string"),
-        (Problem("x", logs=[3]), "logs must be a list"),
-        (Problem("x", observations=[3]), "observations must be a list"),
+        (Problem(""), ValueError, "empty"),
+        (Problem("x" * 20_001), ValueError, "too long"),
+        (Problem("x", logs=["x"] * 201), ValueError, "at most 200"),
+        (Problem("x", logs=["x" * 20_001]), ValueError, "log entry"),
+        (Problem("x", observations=[{}] * 101), ValueError, "at most 100"),
+        (Problem("x", problem_type="other"), ValueError, "unsupported"),
+        (Problem(3), TypeError, "description must be a string"),
+        (Problem("x", problem_type=3), TypeError, "problem_type must be a string"),
+        (Problem("x", logs=[3]), TypeError, "logs must be a list"),
+        (Problem("x", observations=[3]), TypeError, "observations must be a list"),
     ],
 )
-def test_validation(problem, message):
-    with pytest.raises(ValueError, match=message):
+def test_validation(problem, error_type, message):
+    with pytest.raises(error_type, match=message):
         DiagnosticEngine().diagnose(problem)
 
 

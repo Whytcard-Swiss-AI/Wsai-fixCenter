@@ -18,7 +18,7 @@ Repository = "https://github.com/Whytcard-Swiss-AI/Wsai-fixCenter"
 Issues = "https://github.com/Whytcard-Swiss-AI/Wsai-fixCenter/issues"
 
 [project.optional-dependencies]
-dev = ["build>=1", "pytest>=8", "pytest-cov>=5", "ruff>=0.15", "twine>=6"]
+dev = ["build>=1", "pytest>=8", "pytest-cov>=5", "ruff==0.16.3", "twine>=6"]
 
 [project.scripts]
 fixcenter = "fixcenter.cli:main"

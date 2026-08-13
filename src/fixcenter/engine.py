@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import json
 import logging
+from collections.abc import Iterable
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Iterable
 from uuid import uuid4
 
 from fixcenter.diagnostics.base import DEFAULT_DIAGNOSTICS, Diagnostic
@@ -69,11 +69,10 @@ class DiagnosticEngine:
             "unknown",
         }
         if not isinstance(problem.description, str):
-            raise ValueError("description must be a string")
-        if (
-            not isinstance(problem.problem_type, str)
-            or problem.problem_type not in allowed_types
-        ):
+            raise TypeError("description must be a string")
+        if not isinstance(problem.problem_type, str):
+            raise TypeError("problem_type must be a string")
+        if problem.problem_type not in allowed_types:
             raise ValueError(f"unsupported problem_type: {problem.problem_type}")
         if not problem.description.strip():
             raise ValueError("description must not be empty")
@@ -82,7 +81,7 @@ class DiagnosticEngine:
         if not isinstance(problem.logs, list) or any(
             not isinstance(line, str) for line in problem.logs
         ):
-            raise ValueError("logs must be a list of strings")
+            raise TypeError("logs must be a list of strings")
         if len(problem.logs) > 200:
             raise ValueError("logs must contain at most 200 entries")
         if any(len(line) > 20_000 for line in problem.logs):
@@ -90,7 +89,7 @@ class DiagnosticEngine:
         if not isinstance(problem.observations, list) or any(
             not isinstance(item, dict) for item in problem.observations
         ):
-            raise ValueError("observations must be a list of objects")
+            raise TypeError("observations must be a list of objects")
         if len(problem.observations) > 100:
             raise ValueError("observations must contain at most 100 entries")
 

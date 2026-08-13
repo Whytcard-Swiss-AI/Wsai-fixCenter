@@ -13,6 +13,8 @@ from fixcenter.evaluation import run_evaluation
 from fixcenter.models import Problem
 from fixcenter.privacy import redact
 
+LOGGER = logging.getLogger("fixcenter.server")
+
 PROTOCOL = "2025-11-25"
 MODERN_PROTOCOL = "2026-07-28"
 LEGACY_PROTOCOLS = ("2024-11-05", "2025-03-26", "2025-06-18", "2025-11-25")
@@ -377,7 +379,7 @@ def serve() -> None:
             )
             sys.stdout.flush()
         except Exception:
-            logging.exception("Unhandled MCP request failure")
+            LOGGER.exception("Unhandled MCP request failure")
             sys.stdout.write(
                 json.dumps(
                     response(None, error={"code": -32603, "message": "Internal error"})

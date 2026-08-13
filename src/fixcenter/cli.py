@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from pathlib import Path
 
 from fixcenter.catalog import CONTROL_CATALOG
 from fixcenter.collector import SafeCollector
@@ -46,7 +47,7 @@ def main() -> None:
         serve()
     elif args.command == "diagnose":
         raw = (
-            open(args.source, encoding="utf-8").read()
+            Path(args.source).read_text(encoding="utf-8")
             if args.source
             else sys.stdin.read()
         )
