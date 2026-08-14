@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 
-from fixcenter.models import Finding, Problem, Severity
+from wsai_fckdot.models import Finding, Problem, Severity
 
 ALL_TYPES = frozenset(
     {

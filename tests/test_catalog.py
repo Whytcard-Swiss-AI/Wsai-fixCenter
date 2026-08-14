@@ -1,4 +1,4 @@
-from fixcenter.catalog import (
+from wsai_fckdot.catalog import (
     CONTROL_BY_ID,
     CONTROL_CATALOG,
     SUPPORTED_PLATFORMS,

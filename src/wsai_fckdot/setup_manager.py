@@ -11,13 +11,13 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from fixcenter.privacy import contains_secret, redact_value
+from wsai_fckdot.privacy import contains_secret, redact_value
 
-MANAGED_MARKER = "<!-- wsai-fixcenter:managed:v1 -->"
-MANAGED_SCRIPT_MARKER = "# wsai-fixcenter:managed:v1"
+MANAGED_MARKER = "<!-- wsai_fckdot:managed:v1 -->"
+MANAGED_SCRIPT_MARKER = "# wsai_fckdot:managed:v1"
 CURSOR_HEADER = (
     "---\n"
-    "description: Canonical project instructions managed by WSAI FixCenter\n"
+    "description: Canonical project instructions managed by wsai_fckdot\n"
     "alwaysApply: true\n"
     "---\n\n"
 )
@@ -37,7 +37,7 @@ ADAPTERS = (
     Adapter("agents", "AGENTS.md", "Shared agent instructions", "hierarchical"),
     Adapter(
         "cursor",
-        ".cursor/rules/fixcenter.mdc",
+        ".cursor/rules/wsai_fckdot.mdc",
         "Cursor project rules",
         "combined-with-user-rules",
     ),
@@ -76,7 +76,7 @@ INSTRUCTION_SURFACES = (
     "CLAUDE.md",
     "GEMINI.md",
     ".cursorrules",
-    ".cursor/rules/fixcenter.mdc",
+    ".cursor/rules/wsai_fckdot.mdc",
     ".github/copilot-instructions.md",
 )
 
@@ -166,7 +166,7 @@ class SetupManager:
     def catalog() -> dict[str, Any]:
         return {
             "manifest_version": 1,
-            "canonical_directory": ".fixcenter",
+            "canonical_directory": ".wsai_fckdot",
             "adapters": [
                 {
                     "id": item.id,
@@ -179,9 +179,9 @@ class SetupManager:
             "known_tool_surfaces": KNOWN_TOOL_SURFACES,
             "precedence": [
                 "one-off invocation overrides",
-                "active FixCenter profile variable references",
-                "FixCenter canonical project instructions",
-                "tool-specific project instructions not managed by FixCenter",
+                "active wsai_fckdot profile variable references",
+                "wsai_fckdot canonical project instructions",
+                "tool-specific project instructions not managed by wsai_fckdot",
                 "tool user/global configuration",
             ],
             "account_model": "Profiles store labels and env:VARIABLE references only; never credential values.",
@@ -327,7 +327,7 @@ class SetupManager:
                 elif self._is_managed(
                     existing.decode("utf-8", errors="replace"), relative
                 ):
-                    action, reason = "update", "Existing FixCenter-generated file."
+                    action, reason = "update", "Existing wsai_fckdot-generated file."
                 else:
                     action, reason = (
                         "blocked",
@@ -350,13 +350,13 @@ class SetupManager:
         if retirement_issue:
             actions.append(
                 {
-                    "path": ".fixcenter/profiles",
+                    "path": ".wsai_fckdot/profiles",
                     "action": "blocked",
                     "reason": retirement_issue,
                     "_expected_digest": "scan-blocked",
                 }
             )
-            fingerprint.append(f".fixcenter/profiles\0blocked\0{retirement_issue}")
+            fingerprint.append(f".wsai_fckdot/profiles\0blocked\0{retirement_issue}")
         for relative in retirement_candidates:
             target = self._safe_target(workspace, relative)
             if self._has_symlink_component(workspace, target):
@@ -399,7 +399,7 @@ class SetupManager:
         blocked = [item for item in actions if item["action"] == "blocked"]
         warnings = (
             [
-                "Resolve blocked paths manually or choose fewer adapters; FixCenter preserves user-owned files."
+                "Resolve blocked paths manually or choose fewer adapters; wsai_fckdot preserves user-owned files."
             ]
             if blocked
             else []
@@ -448,8 +448,8 @@ class SetupManager:
             if item["action"] in {"create", "update", "retire"}
         ]
         created_files: dict[Path, str] = {}
-        backup_root = workspace / ".fixcenter" / "backups" / plan.plan_id
-        retired_root = workspace / ".fixcenter" / "retired" / plan.plan_id
+        backup_root = workspace / ".wsai_fckdot" / "backups" / plan.plan_id
+        retired_root = workspace / ".wsai_fckdot" / "retired" / plan.plan_id
         moved_files: dict[Path, Path] = {}
         for item in changed:
             if item["action"] not in {"update", "retire"}:
@@ -641,13 +641,13 @@ class SetupManager:
 
     @staticmethod
     def _render_files(manifest: dict[str, Any]) -> dict[str, str]:
-        stored = {"managed_by": "wsai-fixcenter", **manifest}
+        stored = {"managed_by": "wsai_fckdot", **manifest}
         files = {
-            ".fixcenter/setup.json": json.dumps(
+            ".wsai_fckdot/setup.json": json.dumps(
                 stored, ensure_ascii=False, indent=2, sort_keys=True
             )
             + "\n",
-            ".fixcenter/instructions.md": SetupManager._instruction_body(manifest),
+            ".wsai_fckdot/instructions.md": SetupManager._instruction_body(manifest),
         }
         body = SetupManager._instruction_body(manifest)
         for tool_id in manifest["tools"]:
@@ -663,10 +663,10 @@ class SetupManager:
             }
         )
         for name, profile in manifest["profiles"].items():
-            files[f".fixcenter/profiles/{name}.ps1"] = SetupManager._powershell_profile(
-                name, profile["variables"], targets
+            files[f".wsai_fckdot/profiles/{name}.ps1"] = (
+                SetupManager._powershell_profile(name, profile["variables"], targets)
             )
-            files[f".fixcenter/profiles/{name}.sh"] = SetupManager._shell_profile(
+            files[f".wsai_fckdot/profiles/{name}.sh"] = SetupManager._shell_profile(
                 name, profile["variables"], targets
             )
         return files
@@ -688,7 +688,7 @@ class SetupManager:
         return (
             f"{MANAGED_MARKER}\n"
             "# Managed project instructions\n\n"
-            "Generated by WSAI FixCenter from `.fixcenter/setup.json`. "
+            "Generated by wsai_fckdot from `.wsai_fckdot/setup.json`. "
             "Edit the canonical manifest and regenerate; do not place credentials here.\n\n"
             "## Rules\n\n"
             f"{rules}\n\n"
@@ -708,7 +708,7 @@ class SetupManager:
     ) -> str:
         lines = [
             MANAGED_SCRIPT_MARKER,
-            f"# Activate the secret-free FixCenter profile: {name}",
+            f"# Activate the secret-free wsai_fckdot profile: {name}",
             "# Dot-source this file so changes remain in the current shell.",
         ]
         sources = sorted(
@@ -727,14 +727,14 @@ class SetupManager:
             lines.append(
                 f"$env:{variable} = [Environment]::GetEnvironmentVariable('{source}', 'Process')"
             )
-        lines.append(f"Write-Host 'FixCenter profile active: {name}'")
+        lines.append(f"Write-Host 'wsai_fckdot profile active: {name}'")
         return "\n".join(lines) + "\n"
 
     @staticmethod
     def _shell_profile(name: str, bindings: dict[str, str], targets: list[str]) -> str:
         lines = [
             MANAGED_SCRIPT_MARKER,
-            f"# Activate the secret-free FixCenter profile: {name}",
+            f"# Activate the secret-free wsai_fckdot profile: {name}",
             "# Source this file so changes remain in the current shell.",
         ]
         sources = sorted(
@@ -748,7 +748,7 @@ class SetupManager:
         for variable, reference in sorted(bindings.items()):
             source = reference.removeprefix("env:")
             lines.append(f'export {variable}="${{{source}}}"')
-        lines.append(f'echo "FixCenter profile active: {name}"')
+        lines.append(f'echo "wsai_fckdot profile active: {name}"')
         return "\n".join(lines) + "\n"
 
     @staticmethod
@@ -803,13 +803,13 @@ class SetupManager:
             return True
         if content.startswith(f"{CURSOR_HEADER}{MANAGED_MARKER}\n"):
             return True
-        if relative != ".fixcenter/setup.json":
+        if relative != ".wsai_fckdot/setup.json":
             return False
         try:
             parsed = json.loads(content)
         except (json.JSONDecodeError, TypeError):
             return False
-        return isinstance(parsed, dict) and parsed.get("managed_by") == "wsai-fixcenter"
+        return isinstance(parsed, dict) and parsed.get("managed_by") == "wsai_fckdot"
 
     @staticmethod
     def _portable_profile_name(name: str) -> bool:
@@ -855,7 +855,7 @@ class SetupManager:
         workspace: Path, desired: set[str]
     ) -> tuple[list[str], str | None]:
         candidates = {item.path for item in ADAPTERS}
-        profile_directory = workspace / ".fixcenter" / "profiles"
+        profile_directory = workspace / ".wsai_fckdot" / "profiles"
         if profile_directory.is_dir() and not profile_directory.is_symlink():
             try:
                 entries = sorted(
@@ -952,13 +952,13 @@ class SetupManager:
     @staticmethod
     @contextmanager
     def _workspace_lock(workspace: Path):
-        directory = SetupManager._safe_target(workspace, ".fixcenter")
+        directory = SetupManager._safe_target(workspace, ".wsai_fckdot")
         if SetupManager._has_symlink_component(workspace, directory):
-            raise ValueError("the FixCenter directory contains a symbolic link")
+            raise ValueError("the wsai_fckdot directory contains a symbolic link")
         directory.mkdir(parents=True, exist_ok=True)
-        lock = SetupManager._safe_target(workspace, ".fixcenter/apply.lock")
+        lock = SetupManager._safe_target(workspace, ".wsai_fckdot/apply.lock")
         if SetupManager._has_symlink_component(workspace, lock):
-            raise ValueError("the FixCenter lock path contains a symbolic link")
+            raise ValueError("the wsai_fckdot lock path contains a symbolic link")
         flags = os.O_RDWR | os.O_CREAT | getattr(os, "O_BINARY", 0)
         flags |= getattr(os, "O_NOFOLLOW", 0)
         try:
@@ -978,7 +978,7 @@ class SetupManager:
             if "descriptor" in locals():
                 os.close(descriptor)
             raise ValueError(
-                "another FixCenter setup application is in progress"
+                "another wsai_fckdot setup application is in progress"
             ) from exc
         try:
             yield
@@ -1013,7 +1013,7 @@ class SetupManager:
     @staticmethod
     def _atomic_create(path: Path, content: str) -> None:
         descriptor, temporary = tempfile.mkstemp(
-            prefix=f".{path.name}.fixcenter-", dir=path.parent
+            prefix=f".{path.name}.wsai_fckdot-", dir=path.parent
         )
         try:
             with os.fdopen(descriptor, "w", encoding="utf-8", newline="\n") as stream:

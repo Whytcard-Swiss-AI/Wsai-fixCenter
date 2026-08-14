@@ -26,7 +26,7 @@ def test_wheel_contains_all_public_skills(tmp_path):
     wheel = next(output.glob("*.whl"))
     with zipfile.ZipFile(wheel) as archive:
         names = set(archive.namelist())
-    for skill in ("fixcenter-install", "fixcenter-use", "fixcenter-setup"):
+    for skill in ("wsai_fckdot-install", "wsai_fckdot-use", "wsai_fckdot-setup"):
         assert any(name.endswith(f"/skills/{skill}/SKILL.md") for name in names)
         assert any(
             name.endswith(f"/skills/{skill}/agents/openai.yaml") for name in names

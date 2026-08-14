@@ -2,11 +2,11 @@ import json
 import runpy
 import sys
 
-from fixcenter import cli
+from wsai_fckdot import cli
 
 
 def invoke(monkeypatch, capsys, *arguments):
-    monkeypatch.setattr(sys, "argv", ["fixcenter", *arguments])
+    monkeypatch.setattr(sys, "argv", ["wsai_fckdot", *arguments])
     cli.main()
     return capsys.readouterr().out.strip()
 
@@ -49,7 +49,7 @@ def test_diagnose_from_stdin_file_and_report(monkeypatch, capsys, tmp_path):
 def test_cli_serve_dispatch(monkeypatch):
     called = []
     monkeypatch.setattr(cli, "serve", lambda: called.append(True))
-    monkeypatch.setattr(sys, "argv", ["fixcenter", "serve"])
+    monkeypatch.setattr(sys, "argv", ["wsai_fckdot", "serve"])
     cli.main()
     assert called == [True]
 
@@ -113,5 +113,5 @@ def test_setup_cli_workflow(monkeypatch, capsys, tmp_path):
 def test_package_main_module(monkeypatch):
     called = []
     monkeypatch.setattr(cli, "main", lambda: called.append(True))
-    runpy.run_module("fixcenter.__main__", run_name="__main__")
+    runpy.run_module("wsai_fckdot.__main__", run_name="__main__")
     assert called == [True]

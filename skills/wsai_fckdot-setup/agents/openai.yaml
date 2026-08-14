@@ -1,0 +1,4 @@
+interface:
+  display_name: "wsai_fckdot Setup"
+  short_description: "Consolidate agent setup safely"
+  default_prompt: "Use $wsai_fckdot-setup to inventory and consolidate this project setup without exposing credentials."

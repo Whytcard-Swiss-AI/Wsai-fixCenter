@@ -7,10 +7,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 from uuid import uuid4
 
-from fixcenter.diagnostics.base import DEFAULT_DIAGNOSTICS, Diagnostic
-from fixcenter.models import Finding, Problem, Report
+from wsai_fckdot.diagnostics.base import DEFAULT_DIAGNOSTICS, Diagnostic
+from wsai_fckdot.models import Finding, Problem, Report
 
-LOGGER = logging.getLogger("fixcenter")
+LOGGER = logging.getLogger("wsai_fckdot")
 
 
 class DiagnosticEngine:

@@ -1,11 +1,11 @@
 ---
-name: fixcenter-install
-description: Install and connect the public WSAI FixCenter MCP server to a compatible client on Windows, Linux, or macOS.
+name: wsai_fckdot-install
+description: Install and connect the public wsai_fckdot MCP server to a compatible client on Windows, Linux, or macOS.
 ---
 
-# Install WSAI FixCenter
+# Install wsai_fckdot
 
-Use this skill when a user asks to install, update, connect, or validate WSAI FixCenter.
+Use this skill when a user asks to install, update, connect, or validate wsai_fckdot.
 
 ## Safety boundary
 
@@ -18,12 +18,12 @@ Use this skill when a user asks to install, update, connect, or validate WSAI Fi
 ## Procedure
 
 1. Confirm Python 3.10 or newer and Git are available.
-2. Clone `https://github.com/Whytcard-Swiss-AI/Wsai-fixCenter.git` into a user-approved directory, or update an existing clone with a normal fast-forward pull.
+2. Clone `https://github.com/Whytcard-Swiss-AI/wsai_fckdot.git` into a user-approved directory, or update an existing clone with a normal fast-forward pull.
 3. Create a project-local virtual environment.
 4. Install with `python -m pip install -e .`.
-5. Run `python -m fixcenter self-test`; require `success_rate_percent: 100.0`.
-6. Run `python -m fixcenter coverage --platform <windows|linux|darwin>`; explain that design coverage is not runtime observation.
-7. Add the MCP entry only after locating the client's real configuration format. Use the virtual environment's absolute Python executable and `-m fixcenter serve`.
+5. Run `python -m wsai_fckdot self-test`; require `success_rate_percent: 100.0`.
+6. Run `python -m wsai_fckdot coverage --platform <windows|linux|darwin>`; explain that design coverage is not runtime observation.
+7. Add the MCP entry only after locating the client's real configuration format. Use the virtual environment's absolute Python executable and `-m wsai_fckdot serve`.
 8. Restart the client and verify `tools/list` exposes ten tools.
 
 ## MCP entry template
@@ -31,10 +31,10 @@ Use this skill when a user asks to install, update, connect, or validate WSAI Fi
 ```json
 {
   "mcpServers": {
-    "wsai-fixcenter": {
+    "wsai_fckdot": {
       "command": "/absolute/path/to/.venv/python",
-      "args": ["-m", "fixcenter", "serve"],
-      "cwd": "/absolute/path/to/Wsai-fixCenter"
+      "args": ["-m", "wsai_fckdot", "serve"],
+      "cwd": "/absolute/path/to/wsai_fckdot"
     }
   }
 }
