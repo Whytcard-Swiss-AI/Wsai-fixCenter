@@ -3,8 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from fixcenter.engine import DiagnosticEngine
-from fixcenter.models import Problem
+from wsai_fckdot.engine import DiagnosticEngine
+from wsai_fckdot.models import Problem
 
 
 @dataclass(frozen=True)

@@ -1,6 +1,6 @@
 # Coverage model
 
-FixCenter uses two deliberately separate coverage metrics.
+wsai_fckdot uses two deliberately separate coverage metrics.
 
 ## Design coverage
 

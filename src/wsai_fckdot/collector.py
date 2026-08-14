@@ -7,9 +7,14 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from typing import Any
 
-from fixcenter.catalog import CONTROL_BY_ID, CONTROL_CATALOG, ProbeSpec, coverage_report
-from fixcenter.models import Observation
-from fixcenter.privacy import redact
+from wsai_fckdot.catalog import (
+    CONTROL_BY_ID,
+    CONTROL_CATALOG,
+    ProbeSpec,
+    coverage_report,
+)
+from wsai_fckdot.models import Observation
+from wsai_fckdot.privacy import redact
 
 Runner = Callable[..., subprocess.CompletedProcess[str]]
 

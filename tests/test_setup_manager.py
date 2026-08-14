@@ -2,8 +2,8 @@ from pathlib import Path
 
 import pytest
 
-import fixcenter.setup_manager as module
-from fixcenter.setup_manager import MANAGED_MARKER, SetupManager
+import wsai_fckdot.setup_manager as module
+from wsai_fckdot.setup_manager import MANAGED_MARKER, SetupManager
 
 
 def manifest(*, instruction="Write tests.", tools=None, variables=None):
@@ -136,19 +136,21 @@ def test_plan_apply_update_and_stale_guard(tmp_path):
 
     applied = manager.apply(str(workspace), data, plan.plan_id, consent=True)
     assert applied["created"] == 11 and applied["updated"] == 0
-    assert (workspace / ".fixcenter/setup.json").is_file()
+    assert (workspace / ".wsai_fckdot/setup.json").is_file()
     assert (
-        (workspace / ".cursor/rules/fixcenter.mdc")
+        (workspace / ".cursor/rules/wsai_fckdot.mdc")
         .read_text(encoding="utf-8")
         .startswith("---")
     )
     assert "OPENAI_PERSONAL_KEY" in (workspace / "AGENTS.md").read_text(
         encoding="utf-8"
     )
-    powershell = (workspace / ".fixcenter/profiles/personal.ps1").read_text(
+    powershell = (workspace / ".wsai_fckdot/profiles/personal.ps1").read_text(
         encoding="utf-8"
     )
-    shell = (workspace / ".fixcenter/profiles/personal.sh").read_text(encoding="utf-8")
+    shell = (workspace / ".wsai_fckdot/profiles/personal.sh").read_text(
+        encoding="utf-8"
+    )
     assert "OPENAI_PERSONAL_KEY" in powershell and "never-read" not in powershell
     assert 'export OPENAI_API_KEY="${OPENAI_PERSONAL_KEY}"' in shell
 
@@ -162,7 +164,7 @@ def test_plan_apply_update_and_stale_guard(tmp_path):
     assert {item["action"] for item in update.actions} == {"update", "unchanged"}
     updated = manager.apply(str(workspace), changed, update.plan_id, consent=True)
     assert updated["updated"] == 7 and updated["created"] == 0
-    backup = workspace / ".fixcenter/backups" / update.plan_id
+    backup = workspace / ".wsai_fckdot/backups" / update.plan_id
     assert backup.is_dir() and (backup / "AGENTS.md").is_file()
 
 
@@ -189,13 +191,13 @@ def test_plan_is_workspace_bound_and_retires_removed_surfaces(tmp_path):
         item["path"] for item in retire_plan.actions if item["action"] == "retire"
     }
     assert "CLAUDE.md" in retired_paths
-    assert ".fixcenter/profiles/work.ps1" in retired_paths
+    assert ".wsai_fckdot/profiles/work.ps1" in retired_paths
     result = manager.apply(str(first_root), reduced, retire_plan.plan_id, consent=True)
     assert result["retired"] == 6
     assert not (first_root / "CLAUDE.md").exists()
-    retired = first_root / ".fixcenter/retired" / retire_plan.plan_id
+    retired = first_root / ".wsai_fckdot/retired" / retire_plan.plan_id
     assert (retired / "CLAUDE.md").is_file()
-    assert (retired / ".fixcenter/profiles/work.sh").is_file()
+    assert (retired / ".wsai_fckdot/profiles/work.sh").is_file()
 
 
 def test_preserves_user_files_and_blocks_unsafe_targets(tmp_path, monkeypatch):
@@ -236,12 +238,12 @@ def test_transaction_restores_created_and_updated_files(tmp_path, monkeypatch):
     )
     with pytest.raises(OSError, match="synthetic"):
         manager.apply(str(workspace), data, plan.plan_id, consent=True)
-    assert not (workspace / ".fixcenter/instructions.md").exists()
+    assert not (workspace / ".wsai_fckdot/instructions.md").exists()
 
     monkeypatch.undo()
     plan = manager.plan(str(workspace), data, consent=True)
     manager.apply(str(workspace), data, plan.plan_id, consent=True)
-    original = (workspace / ".fixcenter/instructions.md").read_bytes()
+    original = (workspace / ".wsai_fckdot/instructions.md").read_bytes()
     changed = manifest(instruction="Different safe rule.", tools=["agents"])
     update = manager.plan(str(workspace), changed, consent=True)
     monkeypatch.setattr(
@@ -251,7 +253,7 @@ def test_transaction_restores_created_and_updated_files(tmp_path, monkeypatch):
     )
     with pytest.raises(OSError):
         manager.apply(str(workspace), changed, update.plan_id, consent=True)
-    assert (workspace / ".fixcenter/instructions.md").read_bytes() == original
+    assert (workspace / ".wsai_fckdot/instructions.md").read_bytes() == original
 
 
 def test_apply_rechecks_state_and_preserves_concurrent_file(tmp_path, monkeypatch):
@@ -274,7 +276,7 @@ def test_apply_rechecks_state_and_preserves_concurrent_file(tmp_path, monkeypatc
     monkeypatch.setattr(manager, "_assert_create_state", race)
     with pytest.raises(ValueError, match="changed after planning"):
         manager.apply(str(workspace), data, plan.plan_id, consent=True)
-    concurrent = workspace / ".fixcenter/instructions.md"
+    concurrent = workspace / ".wsai_fckdot/instructions.md"
     assert concurrent.read_text(encoding="utf-8") == "concurrent user file"
 
 
@@ -287,7 +289,7 @@ def test_update_identity_race_preserves_concurrent_content(tmp_path, monkeypatch
     manager.apply(str(workspace), initial, first.plan_id, consent=True)
     changed = manifest(instruction="Changed instruction.", tools=["agents"])
     plan = manager.plan(str(workspace), changed, consent=True)
-    target = workspace / ".fixcenter/instructions.md"
+    target = workspace / ".wsai_fckdot/instructions.md"
     original_create = manager._atomic_create
     raced = False
 
@@ -302,8 +304,8 @@ def test_update_identity_race_preserves_concurrent_content(tmp_path, monkeypatch
     with pytest.raises(FileExistsError):
         manager.apply(str(workspace), changed, plan.plan_id, consent=True)
     assert target.read_text(encoding="utf-8") == "concurrent user content"
-    backup = workspace / ".fixcenter/backups" / plan.plan_id
-    assert (backup / ".fixcenter/instructions.md").is_file()
+    backup = workspace / ".wsai_fckdot/backups" / plan.plan_id
+    assert (backup / ".wsai_fckdot/instructions.md").is_file()
 
 
 def test_update_move_never_replaces_concurrent_backup(tmp_path, monkeypatch):
@@ -315,7 +317,7 @@ def test_update_move_never_replaces_concurrent_backup(tmp_path, monkeypatch):
     manager.apply(str(workspace), initial, first.plan_id, consent=True)
     changed = manifest(instruction="Changed instruction.", tools=["agents"])
     plan = manager.plan(str(workspace), changed, consent=True)
-    target = workspace / ".fixcenter/instructions.md"
+    target = workspace / ".wsai_fckdot/instructions.md"
     original = target.read_text(encoding="utf-8")
     original_move = manager._move_no_replace
     raced = False
@@ -332,15 +334,15 @@ def test_update_move_never_replaces_concurrent_backup(tmp_path, monkeypatch):
     with pytest.raises(FileExistsError):
         manager.apply(str(workspace), changed, plan.plan_id, consent=True)
     assert target.read_text(encoding="utf-8") == original
-    backup = workspace / ".fixcenter/backups" / plan.plan_id
-    assert (backup / ".fixcenter/instructions.md").read_text(
+    backup = workspace / ".wsai_fckdot/backups" / plan.plan_id
+    assert (backup / ".wsai_fckdot/instructions.md").read_text(
         encoding="utf-8"
     ) == "concurrent backup"
 
 
 def test_apply_lock_prevents_overlapping_application(tmp_path):
     workspace = tmp_path / "workspace"
-    lock = workspace / ".fixcenter/apply.lock"
+    lock = workspace / ".wsai_fckdot/apply.lock"
     lock.parent.mkdir(parents=True)
     lock.write_text("stale-but-unlocked", encoding="utf-8")
     manager = SetupManager(home=tmp_path / "home", environ={})
@@ -393,7 +395,7 @@ def test_expected_state_and_lock_defensive_branches(tmp_path, monkeypatch):
     monkeypatch.undo()
 
     with SetupManager._workspace_lock(workspace):
-        assert (workspace / ".fixcenter/apply.lock").is_file()
+        assert (workspace / ".wsai_fckdot/apply.lock").is_file()
 
     monkeypatch.setattr(
         module.os,
@@ -617,14 +619,14 @@ def test_optional_defaults_and_empty_bindings(tmp_path):
     body = manager._instruction_body(normalized)
     assert "No environment bindings" in body
     assert manager._is_managed(
-        '{"managed_by": "wsai-fixcenter"}', ".fixcenter/setup.json"
+        '{"managed_by": "wsai_fckdot"}', ".wsai_fckdot/setup.json"
     )
-    assert not manager._is_managed('{"managed_by": "wsai-fixcenter"}')
+    assert not manager._is_managed('{"managed_by": "wsai_fckdot"}')
     assert manager._is_managed(manager._cursor_body(f"{MANAGED_MARKER}\nbody"))
     assert not manager._is_managed(f"Quoted later: {MANAGED_MARKER}")
     assert not manager._is_managed("not json")
-    assert not manager._is_managed("not json", ".fixcenter/setup.json")
-    assert not manager._is_managed('["managed_by", "wsai-fixcenter"]')
+    assert not manager._is_managed("not json", ".wsai_fckdot/setup.json")
+    assert not manager._is_managed('["managed_by", "wsai_fckdot"]')
     assert manager._digest(b"x")
     target = manager._safe_target(tmp_path, "AGENTS.md")
     assert manager._has_symlink_component(tmp_path, target) is False
@@ -662,7 +664,7 @@ def test_backup_preflight_guards(tmp_path, monkeypatch):
         manager.apply(str(workspace), changed, update.plan_id, consent=True)
     monkeypatch.undo()
 
-    backup = workspace / ".fixcenter/backups" / update.plan_id / "AGENTS.md"
+    backup = workspace / ".wsai_fckdot/backups" / update.plan_id / "AGENTS.md"
     backup.parent.mkdir(parents=True)
     backup.write_text("collision", encoding="utf-8")
     with pytest.raises(ValueError, match="already exists"):
@@ -671,7 +673,7 @@ def test_backup_preflight_guards(tmp_path, monkeypatch):
 
 def test_retirement_candidate_and_restore_edge_cases(tmp_path, monkeypatch):
     workspace = tmp_path / "workspace"
-    profiles = workspace / ".fixcenter/profiles"
+    profiles = workspace / ".wsai_fckdot/profiles"
     profiles.mkdir(parents=True)
     (workspace / "CLAUDE.md").mkdir()
 
@@ -692,13 +694,13 @@ def test_retirement_candidate_and_restore_edge_cases(tmp_path, monkeypatch):
     assert SetupManager._retirement_candidates(workspace, set()) == ([], None)
 
     target = workspace / "GEMINI.md"
-    retired = workspace / ".fixcenter/retired/plan/GEMINI.md"
+    retired = workspace / ".wsai_fckdot/retired/plan/GEMINI.md"
     retired.parent.mkdir(parents=True)
     retired.write_text("old", encoding="utf-8")
     SetupManager._restore_transaction(workspace, {}, {target: retired})
     assert target.read_bytes() == b"old" and not retired.exists()
     missing_target = workspace / "missing"
-    missing_retired = workspace / ".fixcenter/retired/plan/missing"
+    missing_retired = workspace / ".wsai_fckdot/retired/plan/missing"
     SetupManager._restore_transaction(workspace, {}, {missing_target: missing_retired})
     SetupManager._restore_transaction(workspace, {})
     created = workspace / "created"
@@ -714,13 +716,13 @@ def test_retirement_candidate_and_restore_edge_cases(tmp_path, monkeypatch):
     assert changed.read_text(encoding="utf-8") == "external"
     occupied = workspace / "occupied"
     occupied.write_text("external", encoding="utf-8")
-    occupied_backup = workspace / ".fixcenter/backups/occupied"
+    occupied_backup = workspace / ".wsai_fckdot/backups/occupied"
     occupied_backup.parent.mkdir(parents=True, exist_ok=True)
     occupied_backup.write_text("old", encoding="utf-8")
     SetupManager._restore_transaction(workspace, {}, {occupied: occupied_backup})
     assert occupied.exists() and occupied_backup.exists()
     link_target = workspace / "link-target"
-    link_backup = workspace / ".fixcenter/backups/link-target"
+    link_backup = workspace / ".wsai_fckdot/backups/link-target"
     link_backup.write_text("old", encoding="utf-8")
     monkeypatch.setattr(
         module.os, "link", lambda *_args, **_kwargs: (_ for _ in ()).throw(OSError())
@@ -774,7 +776,7 @@ def test_retirement_ignores_unprovable_adapter_ownership(tmp_path, monkeypatch):
 
 def test_retirement_scan_limit_blocks_plan(tmp_path, monkeypatch):
     workspace = tmp_path / "workspace"
-    profiles = workspace / ".fixcenter/profiles"
+    profiles = workspace / ".wsai_fckdot/profiles"
     profiles.mkdir(parents=True)
     (profiles / "a.ps1").write_text(
         f"{module.MANAGED_SCRIPT_MARKER}\n", encoding="utf-8"

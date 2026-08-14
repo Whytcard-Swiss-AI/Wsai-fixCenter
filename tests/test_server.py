@@ -3,9 +3,9 @@ import json
 
 import pytest
 
-from fixcenter.collector import SafeCollector
-from fixcenter.engine import DiagnosticEngine
-from fixcenter.server import (
+from wsai_fckdot.collector import SafeCollector
+from wsai_fckdot.engine import DiagnosticEngine
+from wsai_fckdot.server import (
     MODERN_PROTOCOL,
     PROTOCOL,
     SUPPORTED_PROTOCOLS,
@@ -16,7 +16,7 @@ from fixcenter.server import (
     response,
     serve,
 )
-from fixcenter.setup_manager import SetupManager
+from wsai_fckdot.setup_manager import SetupManager
 
 
 def request(method, request_id=1, params=None):
@@ -39,7 +39,7 @@ def test_initialize_ping_notifications_and_tool_list():
     )
     assert initialized["result"]["protocolVersion"] == PROTOCOL
     fallback = handle(request("initialize", params="bad"), engine)
-    assert fallback["result"]["serverInfo"]["version"] == "0.3.0"
+    assert fallback["result"]["serverInfo"]["version"] == "1.0.0"
     assert handle(request("ping"), engine)["result"] == {}
     tool_list = handle(request("tools/list"), engine)["result"]
     assert len(tool_list["tools"]) == len(TOOLS) == 10
@@ -260,7 +260,7 @@ def test_serve_contains_unexpected_failures(monkeypatch):
     monkeypatch.setattr("sys.stdin", io.StringIO(json.dumps(request("ping")) + "\n"))
     monkeypatch.setattr("sys.stdout", output)
     monkeypatch.setattr(
-        "fixcenter.server.handle",
+        "wsai_fckdot.server.handle",
         lambda *_: (_ for _ in ()).throw(RuntimeError("secret")),
     )
     serve()

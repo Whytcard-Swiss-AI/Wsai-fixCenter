@@ -1,4 +1,0 @@
-interface:
-  display_name: "FixCenter Diagnostics"
-  short_description: "Diagnose agent tools safely"
-  default_prompt: "Use $fixcenter-use to diagnose this issue with evidence, privacy controls, and post-fix verification."

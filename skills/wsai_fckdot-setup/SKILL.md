@@ -1,9 +1,9 @@
 ---
-name: fixcenter-setup
-description: Inventory and consolidate messy multi-agent project setup, dot-directories, account profiles, environment references and conflicting instructions with WSAI FixCenter.
+name: wsai_fckdot-setup
+description: Inventory and consolidate messy multi-agent project setup, dot-directories, account profiles, environment references and conflicting instructions with wsai_fckdot.
 ---
 
-# Govern agent setup with WSAI FixCenter
+# Govern agent setup with wsai_fckdot
 
 Use this skill when a user has accumulated configuration from many AI tools, sees conflicting instructions or variables, changes accounts often, or wants one repeatable setup across tools.
 
@@ -23,7 +23,7 @@ Use this skill when a user has accumulated configuration from many AI tools, see
 
 ## Guided workflow
 
-1. Explain in plain language that FixCenter will create one source of truth and generated adapters, not erase tool folders.
+1. Explain in plain language that wsai_fckdot will create one source of truth and generated adapters, not erase tool folders.
 2. Call `get_setup_catalog`.
 3. Call `inspect_setup` with metadata consent for the selected workspace.
 4. Summarize known tool surfaces, unknown count, instruction layers and environment-variable names. Never claim values were inspected.
@@ -47,7 +47,7 @@ To switch accounts, change only `active_profile`, plan again and apply the new p
 State separately:
 
 - what metadata was observed;
-- which files FixCenter created, updated or retired to recoverable storage;
+- which files wsai_fckdot created, updated or retired to recoverable storage;
 - which user-owned files were preserved;
 - which account profile is active;
 - whether any unknown tool surfaces remain;

@@ -1,6 +1,6 @@
-# WSAI FixCenter
+# wsai_fckdot
 
-WSAI FixCenter is a public, privacy-first MCP server for diagnosing hooks, plugins, skills, MCP integrations, configuration, runtimes, networking and PC system state. It also turns a chaotic multi-agent setup into one canonical manifest, isolated account profiles and generated adapters for each supported tool.
+wsai_fckdot is a public, privacy-first MCP server for diagnosing hooks, plugins, skills, MCP integrations, configuration, runtimes, networking and PC system state. It also turns a chaotic multi-agent setup into one canonical manifest, isolated account profiles and generated adapters for each supported tool.
 
 It never repairs a machine automatically, never interpolates user input into commands, never elevates privileges and never sends telemetry. Account bindings accept environment-variable references rather than values; common credential-shaped text is rejected, but users must still keep secrets out of free-form instructions. Setup files are written only after a reviewed plan and explicit consent.
 
@@ -14,7 +14,7 @@ It never repairs a machine automatically, never interpolates user input into com
 - 100% Python statement coverage enforced in CI;
 - tested redaction of common sensitive formats and explicit execution consent.
 - compatibility with both legacy MCP handshakes and the stateless `2026-07-28` era.
-- one canonical `.fixcenter/setup.json` format, five tool adapters and secret-free account profile activators.
+- one canonical `.wsai_fckdot/setup.json` format, five tool adapters and secret-free account profile activators.
 
 The meaning of “100%” is precise. Design coverage means every declared catalog control has a probe on every supported platform. Runtime coverage means every requested probe completed successfully on one execution. Neither metric claims that every possible future application or peripheral is known. See [the coverage model](docs/COVERAGE.md).
 
@@ -37,18 +37,18 @@ The meaning of “100%” is precise. Design coverage means every declared catal
 
 ## One setup instead of endless `.xxx` folders
 
-FixCenter uses `.fixcenter/setup.json` as the project source of truth. Write instructions once, declare account profiles using environment-variable references, and select the adapters your tools need. It can generate:
+wsai_fckdot uses `.wsai_fckdot/setup.json` as the project source of truth. Write instructions once, declare account profiles using environment-variable references, and select the adapters your tools need. It can generate:
 
 - `AGENTS.md`;
-- `.cursor/rules/fixcenter.mdc`;
+- `.cursor/rules/wsai_fckdot.mdc`;
 - `CLAUDE.md`;
 - `GEMINI.md`;
 - `.github/copilot-instructions.md`;
-- PowerShell and POSIX-shell profile activators under `.fixcenter/profiles/`.
+- PowerShell and POSIX-shell profile activators under `.wsai_fckdot/profiles/`.
 
 The activators contain no secrets. They clear declared target variables before mapping the chosen profile from references such as `env:OPENAI_WORK_API_KEY`, preventing personal and work account state from remaining mixed in one shell.
 
-FixCenter inventories known tool directories and counts unknown dot-directories. Unknown names are hidden by default. It does not delete or move any `.xxx` directory, does not follow setup symlinks during inventory, and refuses to overwrite an existing adapter file unless it starts with an exact FixCenter ownership header.
+wsai_fckdot inventories known tool directories and counts unknown dot-directories. Unknown names are hidden by default. It does not delete or move any `.xxx` directory, does not follow setup symlinks during inventory, and refuses to overwrite an existing adapter file unless it starts with an exact wsai_fckdot ownership header.
 
 The workflow is deliberately simple:
 
@@ -69,18 +69,18 @@ System identity, time and locale; CPU, memory and devices; storage; processes, s
 Requires Python 3.10 or newer.
 
 ```bash
-git clone https://github.com/Whytcard-Swiss-AI/Wsai-fixCenter.git
-cd Wsai-fixCenter
+git clone https://github.com/Whytcard-Swiss-AI/wsai_fckdot.git
+cd wsai_fckdot
 python -m venv .venv
 # Windows PowerShell: .venv\Scripts\Activate.ps1
 # Linux/macOS: source .venv/bin/activate
 python -m pip install -e .
-python -m fixcenter self-test
-python -m fixcenter setup-catalog
-python -m fixcenter setup-inventory C:\absolute\project --consent
-python -m fixcenter setup-plan C:\absolute\project setup.example.json --consent
+python -m wsai_fckdot self-test
+python -m wsai_fckdot setup-catalog
+python -m wsai_fckdot setup-inventory C:\absolute\project --consent
+python -m wsai_fckdot setup-plan C:\absolute\project setup.example.json --consent
 # Review the plan_id, then:
-python -m fixcenter setup-apply C:\absolute\project setup.example.json PLAN_ID --consent
+python -m wsai_fckdot setup-apply C:\absolute\project setup.example.json PLAN_ID --consent
 ```
 
 For development:
@@ -97,10 +97,10 @@ Use the virtual environment's absolute Python executable:
 ```json
 {
   "mcpServers": {
-    "wsai-fixcenter": {
-      "command": "/absolute/path/to/Wsai-fixCenter/.venv/bin/python",
-      "args": ["-m", "fixcenter", "serve"],
-      "cwd": "/absolute/path/to/Wsai-fixCenter"
+    "wsai_fckdot": {
+      "command": "/absolute/path/to/wsai_fckdot/.venv/bin/python",
+      "args": ["-m", "wsai_fckdot", "serve"],
+      "cwd": "/absolute/path/to/wsai_fckdot"
     }
   }
 }
@@ -151,12 +151,12 @@ Add the returned observations to a second `diagnose` call. A failed or unavailab
 ## CLI
 
 ```bash
-python -m fixcenter catalog
-python -m fixcenter coverage --platform windows
-python -m fixcenter collect agents.hooks agents.plugins --platform windows
-python -m fixcenter collect agents.hooks --platform windows --execute --consent
-python -m fixcenter diagnose problem.json --out reports
-python -m fixcenter self-test
+python -m wsai_fckdot catalog
+python -m wsai_fckdot coverage --platform windows
+python -m wsai_fckdot collect agents.hooks agents.plugins --platform windows
+python -m wsai_fckdot collect agents.hooks --platform windows --execute --consent
+python -m wsai_fckdot diagnose problem.json --out reports
+python -m wsai_fckdot self-test
 ```
 
 The first `collect` command only produces a plan. The second explicitly executes one allowlisted probe and still omits output.
@@ -165,15 +165,15 @@ The first `collect` command only produces a plan. The second explicitly executes
 
 Three reusable public skills are included:
 
-- [`fixcenter-install`](skills/fixcenter-install/SKILL.md) installs and verifies the MCP without collecting machine data;
-- [`fixcenter-use`](skills/fixcenter-use/SKILL.md) guides diagnosis, consent, narrow collection and post-fix verification;
-- [`fixcenter-setup`](skills/fixcenter-setup/SKILL.md) guides setup inventory, conflict-safe consolidation, account profiles and approved application.
+- [`wsai_fckdot-install`](skills/wsai_fckdot-install/SKILL.md) installs and verifies the MCP without collecting machine data;
+- [`wsai_fckdot-use`](skills/wsai_fckdot-use/SKILL.md) guides diagnosis, consent, narrow collection and post-fix verification;
+- [`wsai_fckdot-setup`](skills/wsai_fckdot-setup/SKILL.md) guides setup inventory, conflict-safe consolidation, account profiles and approved application.
 
-Source archives and wheels both include every skill's `SKILL.md` and `agents/openai.yaml` under the distribution's `share/wsai-fixcenter/skills` data directory. Installing the Python package does not silently activate a skill in an agent client; copy or link the selected skill into that client's documented skill directory.
+Source archives and wheels both include every skill's `SKILL.md` and `agents/openai.yaml` under the distribution's `share/wsai_fckdot/skills` data directory. Installing the Python package does not silently activate a skill in an agent client; copy or link the selected skill into that client's documented skill directory.
 
-## Extending FixCenter
+## Extending wsai_fckdot
 
-Controls live in `fixcenter.catalog`; diagnostics live in `fixcenter.diagnostics`. Every new control needs Windows, Linux and macOS probes, synthetic tests and an updated catalog version. Every new diagnostic needs a stable ID, evidence, explanation, safe fixes and positive/negative evaluation cases. See [CONTRIBUTING.md](CONTRIBUTING.md).
+Controls live in `wsai_fckdot.catalog`; diagnostics live in `wsai_fckdot.diagnostics`. Every new control needs Windows, Linux and macOS probes, synthetic tests and an updated catalog version. Every new diagnostic needs a stable ID, evidence, explanation, safe fixes and positive/negative evaluation cases. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Security
 

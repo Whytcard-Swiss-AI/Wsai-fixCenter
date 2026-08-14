@@ -1,6 +1,6 @@
 # Security and privacy
 
-FixCenter is local-first. Diagnostics and setup inspection are read-only by design; its narrow setup writer is separately consent-gated and ownership-aware.
+wsai_fckdot is local-first. Diagnostics and setup inspection are read-only by design; its narrow setup writer is separately consent-gated and ownership-aware.
 
 ## Collection guardrails
 
@@ -11,7 +11,7 @@ FixCenter is local-first. Diagnostics and setup inspection are read-only by desi
 - Output is omitted by default.
 - Requested output passes through tested pattern-based redaction and an 8,000-character limit.
 - The server has no network client and sends no telemetry.
-- Reports and local `.fixcenter` data are ignored by Git.
+- Reports and local `.wsai_fckdot` data are ignored by Git.
 
 ## Setup write guardrails
 
@@ -24,8 +24,8 @@ FixCenter is local-first. Diagnostics and setup inspection are read-only by desi
 - Application is refused at the filesystem root and user home.
 - Adapter paths are fixed by the public registry; caller-provided paths cannot become write targets.
 - Symlinked paths, oversized files, directories at file targets and user-owned files are blocked.
-- Existing FixCenter-managed files are moved atomically to recoverable storage before an exclusive no-overwrite replacement is created.
-- If a write fails and targets still match FixCenter's transaction state, changed files are restored or removed. Concurrent third-party files are preserved, and displaced originals remain in recoverable storage rather than being overwritten.
+- Existing wsai_fckdot-managed files are moved atomically to recoverable storage before an exclusive no-overwrite replacement is created.
+- If a write fails and targets still match wsai_fckdot's transaction state, changed files are restored or removed. Concurrent third-party files are preserved, and displaced originals remain in recoverable storage rather than being overwritten.
 - Profile scripts validate every source before clearing targets, copy credential values only inside the current process environment and never write those values to disk.
 
 ## Redaction
@@ -34,7 +34,7 @@ The default redactor masks common credentials, bearer values, email addresses, u
 
 ## Non-goals
 
-FixCenter does not remediate system findings automatically, bypass policy, elevate privileges, install packages, stop processes, restart services, change firewall rules, edit the registry, delete or move tool directories, write global/home setup, or upload reports. Its only mutation surface is an explicitly approved workspace setup plan containing fixed adapter paths.
+wsai_fckdot does not remediate system findings automatically, bypass policy, elevate privileges, install packages, stop processes, restart services, change firewall rules, edit the registry, delete or move tool directories, write global/home setup, or upload reports. Its only mutation surface is an explicitly approved workspace setup plan containing fixed adapter paths.
 
 ## Reporting a vulnerability
 

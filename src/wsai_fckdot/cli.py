@@ -5,13 +5,13 @@ import json
 import sys
 from pathlib import Path
 
-from fixcenter.catalog import CONTROL_CATALOG
-from fixcenter.collector import SafeCollector
-from fixcenter.engine import DiagnosticEngine, write_report
-from fixcenter.evaluation import run_evaluation
-from fixcenter.models import Problem
-from fixcenter.server import serve
-from fixcenter.setup_manager import SetupManager
+from wsai_fckdot.catalog import CONTROL_CATALOG
+from wsai_fckdot.collector import SafeCollector
+from wsai_fckdot.engine import DiagnosticEngine, write_report
+from wsai_fckdot.evaluation import run_evaluation
+from wsai_fckdot.models import Problem
+from wsai_fckdot.server import serve
+from wsai_fckdot.setup_manager import SetupManager
 
 
 def _json(data) -> None:
@@ -20,7 +20,7 @@ def _json(data) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        prog="fixcenter", description="WSAI FixCenter diagnostics"
+        prog="wsai_fckdot", description="wsai_fckdot diagnostics"
     )
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("serve", help="Start the MCP JSON-RPC server on stdin/stdout")

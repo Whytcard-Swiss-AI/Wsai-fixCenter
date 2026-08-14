@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field
 from typing import Any, Literal
 
-from fixcenter.privacy import redact_value
+from wsai_fckdot.privacy import redact_value
 
 ProblemType = Literal[
     "hook",

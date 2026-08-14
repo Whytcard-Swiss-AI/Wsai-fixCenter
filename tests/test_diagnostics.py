@@ -1,9 +1,9 @@
 import pytest
 
-from fixcenter.diagnostics.base import DEFAULT_DIAGNOSTICS
-from fixcenter.engine import DiagnosticEngine
-from fixcenter.evaluation import CASES, run_evaluation
-from fixcenter.models import Problem
+from wsai_fckdot.diagnostics.base import DEFAULT_DIAGNOSTICS
+from wsai_fckdot.engine import DiagnosticEngine
+from wsai_fckdot.evaluation import CASES, run_evaluation
+from wsai_fckdot.models import Problem
 
 
 def test_synthetic_evaluation_is_perfect():

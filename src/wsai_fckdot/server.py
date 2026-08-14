@@ -5,17 +5,17 @@ import logging
 import sys
 from typing import Any
 
-from fixcenter import __version__
-from fixcenter.catalog import CONTROL_CATALOG
-from fixcenter.collector import SafeCollector
-from fixcenter.diagnostics.base import DEFAULT_DIAGNOSTICS
-from fixcenter.engine import DiagnosticEngine
-from fixcenter.evaluation import run_evaluation
-from fixcenter.models import Problem
-from fixcenter.privacy import redact
-from fixcenter.setup_manager import ADAPTERS, SetupManager
+from wsai_fckdot import __version__
+from wsai_fckdot.catalog import CONTROL_CATALOG
+from wsai_fckdot.collector import SafeCollector
+from wsai_fckdot.diagnostics.base import DEFAULT_DIAGNOSTICS
+from wsai_fckdot.engine import DiagnosticEngine
+from wsai_fckdot.evaluation import run_evaluation
+from wsai_fckdot.models import Problem
+from wsai_fckdot.privacy import redact
+from wsai_fckdot.setup_manager import ADAPTERS, SetupManager
 
-LOGGER = logging.getLogger("fixcenter.server")
+LOGGER = logging.getLogger("wsai_fckdot.server")
 
 PROTOCOL = "2025-11-25"
 MODERN_PROTOCOL = "2026-07-28"
@@ -412,7 +412,7 @@ def handle(
             {
                 "protocolVersion": protocol,
                 "capabilities": {"tools": {"listChanged": False}},
-                "serverInfo": {"name": "wsai-fixcenter", "version": __version__},
+                "serverInfo": {"name": "wsai_fckdot", "version": __version__},
             },
         )
     if method == "server/discover":
@@ -422,13 +422,13 @@ def handle(
                 "resultType": "complete",
                 "supportedVersions": list(SUPPORTED_PROTOCOLS),
                 "capabilities": {"tools": {}},
-                "serverInfo": {"name": "wsai-fixcenter", "version": __version__},
+                "serverInfo": {"name": "wsai_fckdot", "version": __version__},
                 "instructions": "Diagnose supplied evidence first. For setup consolidation, inventory metadata, review a plan, then apply only the exact approved plan ID.",
                 "ttlMs": 300_000,
                 "cacheScope": "public",
                 "_meta": {
                     "io.modelcontextprotocol/serverInfo": {
-                        "name": "wsai-fixcenter",
+                        "name": "wsai_fckdot",
                         "version": __version__,
                     }
                 },

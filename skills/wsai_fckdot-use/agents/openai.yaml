@@ -1,0 +1,4 @@
+interface:
+  display_name: "wsai_fckdot Diagnostics"
+  short_description: "Diagnose agent tools safely"
+  default_prompt: "Use $wsai_fckdot-use to diagnose this issue with evidence, privacy controls, and post-fix verification."

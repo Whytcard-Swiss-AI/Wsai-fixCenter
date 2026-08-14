@@ -3,9 +3,9 @@ import logging
 
 import pytest
 
-from fixcenter.diagnostics.base import DEFAULT_DIAGNOSTICS, Diagnostic
-from fixcenter.engine import DiagnosticEngine, write_report
-from fixcenter.models import Finding, Observation, Problem, Report
+from wsai_fckdot.diagnostics.base import DEFAULT_DIAGNOSTICS, Diagnostic
+from wsai_fckdot.engine import DiagnosticEngine, write_report
+from wsai_fckdot.models import Finding, Observation, Problem, Report
 
 
 def test_rank_validation_and_no_findings(caplog):

@@ -2,9 +2,9 @@ import subprocess
 
 import pytest
 
-import fixcenter.collector as module
-from fixcenter.catalog import CONTROL_CATALOG
-from fixcenter.collector import SafeCollector, current_platform
+import wsai_fckdot.collector as module
+from wsai_fckdot.catalog import CONTROL_CATALOG
+from wsai_fckdot.collector import SafeCollector, current_platform
 
 
 def completed(argv, **_):

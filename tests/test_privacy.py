@@ -1,4 +1,4 @@
-from fixcenter.privacy import contains_secret, redact, redact_value
+from wsai_fckdot.privacy import contains_secret, redact, redact_value
 
 
 def test_redaction_masks_sensitive_values(monkeypatch):

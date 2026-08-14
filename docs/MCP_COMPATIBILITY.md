@@ -1,6 +1,6 @@
 # MCP compatibility
 
-FixCenter supports both MCP protocol eras over newline-delimited stdio JSON-RPC.
+wsai_fckdot supports both MCP protocol eras over newline-delimited stdio JSON-RPC.
 
 - Legacy handshake revisions: `2024-11-05`, `2025-03-26`, `2025-06-18`, `2025-11-25`.
 - Modern stateless revision: `2026-07-28`, discovered through `server/discover` and accepted through per-request `_meta`.
